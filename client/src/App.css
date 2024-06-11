@@ -1,0 +1,23 @@
+.App {
+  text-align: center;
+}
+
+.products {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.product-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+  max-width: 200px;
+  text-align: left;
+}
+
+.product-card img {
+  max-width: 100%;
+  border-radius: 8px;
+}
