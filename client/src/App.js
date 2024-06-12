@@ -1,37 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import HomePage from './HomePage/HomePage';
+import SearchPage from './SearchPage/SearchPage';
+import SellPage from './SellPage/SellPage';
+import ProfilePage from './ProfilePage/ProfilePage';
+import LoginPage from './LoginPage/LoginPage';
+import Navbar from './Navbar/Navbar';
 
 function App() {
-    const [products, setProducts] = useState([]);
-
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const response = await axios.get('http://localhost:5001/api/products');
-                setProducts(response.data);
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            }
-        };
-
-        fetchProducts();
-    }, []);
-
     return (
-        <div className="App">
-            <h1>Scooter eCommerce</h1>
-            <div className="products">
-                {products.map(product => (
-                    <div key={product.id} className="product-card">
-                        <img src={product.image_url} alt={product.name} />
-                        <h2>{product.name}</h2>
-                        <p>{product.description}</p>
-                        <p>€{product.price}</p>
-                    </div>
-                ))}
+        <Router>
+            <div>
+                <Navbar />
+                {/* <nav>
+                    <ul>
+                        <li>
+                            <Link to="/">Home</Link>
+                        </li>
+                        <li>
+                            <Link to="/search">Search</Link>
+                        </li>
+                    </ul>
+                </nav> */}
+
+                <Routes>
+                    <Route path="/" exact element={<HomePage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/sell" element={<SellPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                </Routes>
             </div>
-        </div>
+        </Router>
     );
 }
 

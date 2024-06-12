@@ -2,6 +2,13 @@
   text-align: center;
 }
 
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .products {
   display: flex;
   flex-wrap: wrap;
@@ -20,4 +27,35 @@
 .product-card img {
   max-width: 100%;
   border-radius: 8px;
+}
+
+.link {
+    text-decoration: none;
+    margin: auto 20px;
+    font-size: 18px;
+    color: black;
+}
+
+.link:hover {
+    color: gray;
+}
+
+.button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: black;
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+    width: auto;
+}
+
+.button:hover {
+    background-color: gray;
+}
+
+img {
+    max-width: 95%;
+    border-radius: 2rem;
 }
