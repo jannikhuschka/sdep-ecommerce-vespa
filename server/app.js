@@ -6,7 +6,11 @@ const path = require('path');
 const app = express();
 const port = 5001;
 
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,POST,PUT,DELETE',
+    credentials: true
+}));
 app.use(express.json());
 
 const pool = new Pool({
@@ -21,6 +25,21 @@ app.get('/api/products', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM scooters');
         res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.post('/api/products', async (req, res) => {
+    console.log('Adding scooter for god\'s sake!');
+    try {
+        const { name, description, year, model, power, price } = req.body;
+        await pool.query(
+            'INSERT INTO scooters (name, description, year, model, power, price) VALUES ($1, $2, $3, $4, $5, $6)',
+            [name, description, year, model, power, price]
+        );
+        res.status(201).send('Scooter added');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

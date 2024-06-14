@@ -9,7 +9,10 @@ function SearchPage() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await axios.get('/api/products');
+                const axiosInstance = axios.create({
+                    baseURL: 'http://localhost:5001',
+                });
+                const response = await axiosInstance.get('/api/products');
                 setProducts(response.data);
             } catch (error) {
                 console.error('Error fetching products:', error);
@@ -28,7 +31,7 @@ function SearchPage() {
                         <img src={product.image_url} alt={product.name} />
                         <h2>{product.name}</h2>
                         <p>{product.description}</p>
-                        <p>${product.price}</p>
+                        <p>€{product.price}</p>
                     </div>
                 ))}
             </div>

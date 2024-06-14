@@ -7,15 +7,18 @@ function HomePage() {
     return (
         <div class="container">
             <h1>eCommerce Motorini</h1>
-            <p>Find the perfect scooter for you, today</p>
+            <div class="centered">
+                <p>Find the perfect scooter for you, today</p>
+            </div>
             <Link to="/search" className="button">Start searching</Link>
 
             <img src="https://m.media-amazon.com/images/I/61Dvr5NyixL._AC_UF1000,1000_QL80_.jpg" />
 
             <h1>The biggest scooter marketplace</h1>
-            <p>Sell the perfect scooter for others, tomorrow</p>
+            <div class="centered">
+                <p>Sell the perfect scooter for others, tomorrow</p>
+            </div>
             <Link to="/sell" className="button">Start selling</Link>
-
         </div>
     );
 }

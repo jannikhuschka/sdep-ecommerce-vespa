@@ -1,12 +1,11 @@
 import './InputField.css';
 
-function InputField({id, name}) {
-    const placeholder = name;
+function InputField({id, name, placeholder = "Enter ", type = "text"}) {
     return (
-        <div class="input-container">
+        <div className="input-container">
             {/* <label for={id}>{name.value}</label> */}
             <p>{name}</p>
-            <input name={id} type="text" placeholder={"Enter your " + placeholder}></input>
+            <input id={id} name={id} type={type} placeholder={placeholder + name}></input>
         </div>
     );
 }
