@@ -1,0 +1,22 @@
+input {
+    width: 20rem;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border: 0.2rem solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+}
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: max-content;
+    padding: 0.2rem;
+    margin-bottom: 0.5rem;
+}
+
+p {
+    align-self: flex-start;
+    font-weight: bold;
+}
