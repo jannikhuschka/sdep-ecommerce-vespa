@@ -5,7 +5,7 @@ import './ProfilePage.css';
 
 function ProfilePage() {
     return (
-        <div class="container">
+        <div className="container">
             <h1>Profile</h1>
         </div>
     );

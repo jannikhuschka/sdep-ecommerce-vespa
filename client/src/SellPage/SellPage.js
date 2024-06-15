@@ -6,7 +6,7 @@ import InputField from '../InputField/InputField';
 
 function SellPage() {
     return (
-        <div class="container">
+        <div className="container">
             <h1>Sell scooters</h1>
             <InputField id="name" name="Name" />
             <InputField id="description" name="Detailed Description" />
@@ -28,6 +28,7 @@ function sell() {
     const model = document.getElementById('model').value;
     const power = document.getElementById('power').value;
     const price = document.getElementById('price').value;
+    const owner = document.cookie.split('=')[1];
     console.log("Selling scooter");
     // DB Access to add scooter
     const addScooter = async () => {
@@ -35,7 +36,7 @@ function sell() {
             const axiosInstance = axios.create({
                 baseURL: 'http://localhost:5001',
             });
-            const response = axiosInstance.post('/api/products', { name, description, year, model, power, price });
+            const response = axiosInstance.post('/api/products', { name, description, year, model, power, price, owner });
             console.log(response);
         } catch (error) {
             console.error('Error adding scooter:', error);

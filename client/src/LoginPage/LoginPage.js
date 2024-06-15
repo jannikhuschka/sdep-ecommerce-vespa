@@ -16,7 +16,7 @@ function LoginPage() {
                     <InputField id="login-password" name="Password" type="password" />
                     <button onClick={login} className="button">Log in</button>
                 </div>
-                <div class="signup">
+                <div className="signup">
                     <h2>Sign up</h2>
                     <InputField id="signup-name" name="Name" />
                     <InputField id="signup-email" name="Email" />
@@ -40,6 +40,8 @@ function login() {
         password: password
     }).then(response => {
         console.log(response.data);
+        document.cookie = 'authToken=' + response.data.id;
+        window.location.href = '/';
     }).catch(error => {
         console.log(error.response.data);
     });
@@ -51,4 +53,15 @@ function signup() {
     const password = document.getElementById('signup-password').value;
     console.log("Signing up user ", name, " with email ", email, " and password (SECRET) ", password);
     // DB Access to add user if doesn't exist
+    axiosInstance.post('/api/signup', {
+        name: name,
+        email: email,
+        password: password
+    }).then(response => {
+        console.log(response.data);
+        document.cookie = 'authToken=' + response.data.id;
+        window.location.href = '/';
+    }).catch(error => {
+        console.log(error.response.data);
+    });
 }

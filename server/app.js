@@ -3,9 +3,7 @@ const session = require('express-session');
 const cors = require('cors');
 const { Pool } = require('pg');
 const path = require('path');
-var passport = require('passport');
-var bodyParser = require('body-parser');
-var JsonStrategy = require('passport-json').Strategy;
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = 5001;
@@ -17,7 +15,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use(bodyParser.json());
+app.use(cookieParser());
 
 // Middleware setup
 app.use(session({
@@ -25,8 +23,6 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
-app.use(passport.initialize());
-app.use(passport.session());
 
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -34,34 +30,6 @@ const pool = new Pool({
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: 5432,
-});
-
-passport.use(new JsonStrategy( { usernameProp: 'email', passwordProp: 'password' }, function verify(email, password, cb) {
-    console.log('Verifying user');
-    try {
-        const result = pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (bcrypt.compareSync(password, result.rows[0].password_hash)) {
-            console.log('Login successful');
-            return cb(null, result.rows[0]);
-        } else {
-            console.log('Login failed');
-            return cb(null, false, { message: 'Incorrect password' });
-        }
-    } catch (err) {
-        console.log('Login failed');
-        console.error(err.message);
-        return cb(err);
-    }
-  }));
-
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
-
-// Deserialize user from session
-passport.deserializeUser((id, done) => {
-    const user = pool.query('SELECT * FROM users WHERE id = $1', [id]).rows[0];
-    done(null, user);
 });
 
 app.get('/api/products', async (req, res) => {
@@ -77,10 +45,10 @@ app.get('/api/products', async (req, res) => {
 app.post('/api/products', async (req, res) => {
     console.log('Adding scooter');
     try {
-        const { name, description, year, model, power, price } = req.body;
+        const { name, description, year, model, power, price, owner } = req.body;
         await pool.query(
-            'INSERT INTO scooters (name, description, year, model, power, price) VALUES ($1, $2, $3, $4, $5, $6)',
-            [name, description, year, model, power, price]
+            'INSERT INTO scooters (name, description, year, model, power, price, owner) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [name, description, year, model, power, price, owner]
         );
         res.status(201).send('Scooter added');
     } catch (err) {
@@ -89,54 +57,55 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// app.post('/api/login', async (req, res) => {
-//     // try {
-//     //     const { email, password } = req.body;
-//     //     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-//     //     if (result.rows.length === 0) {
-//     //         res.status(404).send('User not found');
-//     //     } else {
-//     //         const user = result.rows[0];
-//     //         console.log('User: ', user.name);
-//     //         console.log('Password: ', user.password);
-//     //         if (bcrypt.compareSync(password, user.password_hash)) {
-//     //             res.status(200).send('Login successful');
-//     //         } else {
-//     //             res.status(401).send('Wrong password');
-//     //         }
-//     //     }
-//     // } catch (err) {
-//     //     console.error(err.message);
-//     //     res.status(500).send('Server error');
-//     // }
-//     passport.authenticate('local', { failureRedirect: '/search', failureMessage: true }),
-//     function(req, res) {
-//         res.redirect('/');
-//     }
-// });
-
 app.post('/api/login', async (req, res) => {
-    console.log('Logging in');
-    passport.authenticate('json', { successRedirect: '/search', failureRedirect: '/login', failureMessage: true });
-});
-
-app.post('/api/signup', async (req, res) => {
     try {
-        const { name, email, passwordHash } = req.body;
+        const { email, password } = req.body;
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (result.rows.length > 0) {
-            res.status(409).send('User already exists');
+        if (result.rows.length === 0) {
+            res.status(404).send('User not found');
         } else {
-            await pool.query(
-                'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)',
-                [name, email, passwordHash]
-            );
-            res.status(201).send('User added');
+            const user = result.rows[0];
+            console.log('User: ', user.name);
+            console.log('Password: ', user.password_hash);
+            if (bcrypt.compareSync(password, user.password_hash)) {
+                res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
+                res.status(200).send(user);
+            } else {
+                res.status(401).send('Wrong password');
+            }
         }
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
+});
+
+app.post('/api/signup', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length > 0) {
+            res.status(409).send('User already exists');
+        } else {
+            const passwordHash = bcrypt.hashSync(password, 10);
+            await pool.query(
+                'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3)',
+                [name, email, passwordHash]
+            );
+            const query = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+            const user = query.rows[0];
+            res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
+            res.status(201).send(user);
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/api/logout', (req, res) => {
+    res.clearCookie('authToken');
+    res.status(200).send('Logged out');
 });
 
 // Serve static files from the React app
