@@ -5,6 +5,7 @@ input {
     border: 0.2rem solid #ccc;
     border-radius: 0.5rem;
     font-size: 1rem;
+    margin: 0 0 0.7rem 0;
 }
 
 .input-container {
@@ -19,4 +20,5 @@ input {
 p {
     align-self: flex-start;
     font-weight: bold;
+    margin: 0 0 0.3rem 0;
 }

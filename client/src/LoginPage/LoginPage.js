@@ -2,6 +2,8 @@ import React from 'react';
 import '../App.css';
 import './LoginPage.css';
 import InputField from '../InputField/InputField';
+import axios from 'axios';
+const axiosInstance = axios.create({baseURL: 'http://localhost:5001'});
 
 function LoginPage() {
     return (
@@ -33,6 +35,14 @@ function login() {
     const password = document.getElementById('login-password').value;
     console.log("Logging in user ", email, " with password (SECRET) ", password);
     // DB Access to check user and login if correct
+    axiosInstance.post('/api/login', {
+        email: email,
+        password: password
+    }).then(response => {
+        console.log(response.data);
+    }).catch(error => {
+        console.log(error.response.data);
+    });
 }
 
 function signup() {
