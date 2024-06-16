@@ -1,0 +1,13 @@
+.scooter-card {
+  border: 0.1rem solid #aaa;
+  border-radius: 2rem;
+  padding: 1rem;
+  margin: 1rem;
+  text-align: left;
+  width: 20rem;
+}
+
+.scooter-card img {
+  max-width: 100%;
+  border-radius: 2rem;
+}

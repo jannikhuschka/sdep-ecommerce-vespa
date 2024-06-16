@@ -34,7 +34,22 @@ const pool = new Pool({
 
 app.get('/api/products', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM scooters');
+        const search = req.query.search;
+        if (!search) {
+            const result = await pool.query('SELECT * FROM scooters');
+            res.json(result.rows);
+            return;
+        }
+        const priceRange = req.query.priceRange;
+        console.log('Price range:', priceRange);
+        const result = await pool.query(`
+            SELECT *
+            FROM scooters
+            WHERE price >= $2 AND price <= $3
+            AND LOWER(name) ILIKE LOWER($1)
+            OR LOWER(description) ILIKE LOWER($1)
+            OR LOWER(model) ILIKE LOWER($1)
+            `, ['%' + search + '%', priceRange[0], priceRange[1]]);
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);

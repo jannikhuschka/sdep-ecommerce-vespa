@@ -6,17 +6,25 @@ import './Navbar.css';
 import '../App.css';
 
 function Navbar() {
+    const isLoggedIn = existsCookie('authToken');
     return (
         <nav className="navbar">
             <div className="navbar-left">
                 <Link to="/" className="navbar-title">eCommerce Motorini</Link>
             </div>
-            <div className="navbar-right">
-                <Link to="/search" className="link">Search</Link>
-                <Link to="/sell" className="link">Sell</Link>
-                <Link to="/profile" className="link">Profile</Link>
-                <button onClick={existsCookie('authToken') ? logout : login} className="button">{existsCookie('authToken') ? "Log out" : "Log in / Sign up"}</button>
-            </div>
+            { isLoggedIn ?
+                <div className="navbar-right">
+                    <Link to="/search" className="link">Search</Link>
+                    <Link to="/sell" className="link">Sell</Link>
+                    <Link to="/profile" className="link">Profile</Link>
+                    <button onClick={logout} className="button">Log out</button>
+                </div>
+                :
+                <div className="navbar-right">
+                    <Link to="/search" className="link">Search</Link>
+                    <button onClick={login} className="button">Log in / Sign up</button>
+                </div>
+            }
         </nav>
     );
 }
