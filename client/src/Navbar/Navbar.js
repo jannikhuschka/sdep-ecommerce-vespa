@@ -41,7 +41,7 @@ function logout() {
     window.location.href = '/';
 }
 
-function existsCookie(name) {
+export function existsCookie(name) {
     var dc = document.cookie;
     var prefix = name + "=";
     var begin = dc.indexOf("; " + prefix);

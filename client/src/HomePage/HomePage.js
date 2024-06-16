@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
 import './HomePage.css';
+import { existsCookie } from '../Navbar/Navbar';
 
 function HomePage() {
     return (
@@ -18,7 +19,7 @@ function HomePage() {
             <div className="centered">
                 <p>Sell the perfect scooter for others, tomorrow</p>
             </div>
-            <Link to="/sell" className="button">Start selling</Link>
+            <Link to={existsCookie("authToken") ? "/sell" : "login"} className="button">Start selling</Link>
         </div>
     );
 }

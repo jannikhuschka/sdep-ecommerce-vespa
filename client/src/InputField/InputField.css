@@ -1,4 +1,4 @@
-input[type="text"] {
+input:not([type="range"]) {
     min-width: 15rem;
     box-sizing: border-box;
     padding: 0.5rem;
