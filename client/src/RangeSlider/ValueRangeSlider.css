@@ -1,0 +1,10 @@
+.double-slider p {
+    align-self: flex-start;
+    font-weight: bold;
+    margin: 0 0 1rem 0;
+}
+
+.double-slider .range-slider {
+    width: 100%;
+    margin: 0 0 1rem 0;
+}

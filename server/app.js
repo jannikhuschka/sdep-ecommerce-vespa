@@ -34,23 +34,45 @@ const pool = new Pool({
 
 app.get('/api/products', async (req, res) => {
     try {
+        const result = await pool.query('SELECT * FROM scooters');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/api/products/filtered', async (req, res) => {
+    try {
         const search = req.query.search;
-        if (!search) {
-            const result = await pool.query('SELECT * FROM scooters');
-            res.json(result.rows);
-            return;
-        }
         const priceRange = req.query.priceRange;
-        console.log('Price range:', priceRange);
+        const yearRange = req.query.yearRange;
+        const powerRange = req.query.powerRange;
         const result = await pool.query(`
             SELECT *
             FROM scooters
-            WHERE price >= $2 AND price <= $3
-            AND LOWER(name) ILIKE LOWER($1)
+            WHERE (LOWER(name) ILIKE LOWER($1)
             OR LOWER(description) ILIKE LOWER($1)
-            OR LOWER(model) ILIKE LOWER($1)
-            `, ['%' + search + '%', priceRange[0], priceRange[1]]);
+            OR LOWER(model) ILIKE LOWER($1))
+            AND price >= $2 AND price <= $3
+            AND year >= $4 AND year <= $5
+            AND power >= $6 AND power <= $7
+            `, ['%' + search + '%', priceRange[0], priceRange[1], yearRange[0], yearRange[1], powerRange[0], powerRange[1]]);
         res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/api/products/extremeValues', async (req, res) => {
+    try {
+        const attribute = req.query.attribute;
+        var low = await pool.query(`SELECT ${attribute} FROM scooters ORDER BY ${attribute} ASC LIMIT 1`);
+        var high = await pool.query(`SELECT ${attribute} FROM scooters ORDER BY ${attribute} DESC LIMIT 1`);
+        low = Math.floor(parseFloat(low.rows[0][attribute]));
+        high = Math.ceil(parseFloat(high.rows[0][attribute]));
+        res.json([low, high]);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

@@ -1,5 +1,5 @@
-input {
-    width: 20rem;
+input[type="text"] {
+    min-width: 15rem;
     box-sizing: border-box;
     padding: 0.5rem;
     border: 0.2rem solid #ccc;
@@ -12,7 +12,7 @@ input {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    max-width: max-content;
+    /* max-width: max-content; */
     padding: 0.2rem;
     margin-bottom: 0.5rem;
 }
