@@ -3,11 +3,14 @@ const session = require('express-session');
 const cors = require('cors');
 const { Pool } = require('pg');
 const path = require('path');
+const http = require('http');
 const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = 5001;
 const bcrypt = require('bcryptjs');
+const jimp = require('jimp');
+const multer = require('multer');
 
 app.use(cors({
     origin: 'http://localhost:3000',
@@ -31,6 +34,24 @@ const pool = new Pool({
     password: process.env.DB_PASSWORD,
     port: 5432,
 });
+
+var profilePicStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, './images/profile')
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname)
+    }
+})
+var profilePicUpload = multer({ storage: profilePicStorage });
+
+app.use(express.static(__dirname + '/public'));
+app.use('/images', express.static('images'))
+
+app.post('/api/profile-picture', profilePicUpload.single('profile-pic'), function (req, res, next) {
+  console.log(JSON.stringify(req.file))
+  res.status(201).send('Profile picture uploaded');
+})
 
 app.get('/api/products', async (req, res) => {
     try {

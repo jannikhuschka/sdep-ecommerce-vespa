@@ -15,7 +15,6 @@ function HomePage() {
 
             <img src="https://m.media-amazon.com/images/I/61Dvr5NyixL._AC_UF1000,1000_QL80_.jpg" />
 
-            <h1>The biggest scooter marketplace</h1>
             <div className="centered">
                 <p>Sell the perfect scooter for others, tomorrow</p>
             </div>
