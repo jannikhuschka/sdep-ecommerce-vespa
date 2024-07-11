@@ -30,3 +30,10 @@ INSERT INTO scooters (name, description, price, year, power, model, image_url, o
 ('Scooter Model A', 'A great scooter', 299.99, 2012, 125.0, 'Vespa GTS Super 125', 'https://images.piaggio.com/vespa/vehicles/nvh1000u04/nvh1r7uu04/nvh1r7uu04-01-m.png', 1),
 ('Scooter Model B', 'An awesome scooter', 399.99, 2008, 145.4, 'Vespa GTV', 'https://images.piaggio.com/vespa/vehicles/nvh4000u01/nvh4q3zu01/nvh4q3zu01-01-m.png', 2)
 ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS "session" (
+    "sid" VARCHAR NOT NULL COLLATE "default",
+    "sess" JSON NOT NULL,
+    "expire" TIMESTAMP(6) NOT NULL,
+    PRIMARY KEY ("sid")
+) WITH (OIDS=FALSE);

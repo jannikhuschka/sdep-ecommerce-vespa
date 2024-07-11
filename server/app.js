@@ -1,10 +1,9 @@
 const express = require('express');
 const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
 const cors = require('cors');
 const { Pool } = require('pg');
 const path = require('path');
-const http = require('http');
-const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = 5001;
@@ -18,14 +17,6 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use(cookieParser());
-
-// Middleware setup
-app.use(session({
-    secret: 'your_secret_key',
-    resave: false,
-    saveUninitialized: false
-}));
 
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -35,12 +26,36 @@ const pool = new Pool({
     port: 5432,
 });
 
+// Middleware setup
+// app.use(session({
+//     secret: 'your_secret_key',
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: { maxAge: 24 * 60 * 60 * 1000 }
+// }));
+
+app.use(
+    session({
+      store: new PgSession({
+        pool: pool, // Connection pool
+        tableName: "session", // Use the session table we created
+      }),
+      secret: "your_secret_key", // Replace with your own secret
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 30 * 24 * 60 * 60 * 1000, //cookies last 30 days
+        sameSite: "none", // Allows the cookie to be sent in all contexts
+      }, // 30 days
+    })
+  );
+
 var profilePicStorage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, './images/profile')
     },
     filename: function (req, file, cb) {
-      cb(null, file.originalname)
+      cb(null, 'A' + path.extname(file.originalname))
     }
 })
 var profilePicUpload = multer({ storage: profilePicStorage });
@@ -48,8 +63,10 @@ var profilePicUpload = multer({ storage: profilePicStorage });
 app.use(express.static(__dirname + '/public'));
 app.use('/images', express.static('images'))
 
-app.post('/api/profile-picture', profilePicUpload.single('profile-pic'), function (req, res, next) {
-  console.log(JSON.stringify(req.file))
+app.post('/api/profile-picture', profilePicUpload.single('profile-pic'), function async (req, res, next) {
+//   console.log(req.session.userID);
+  console.log(req.session);
+//   console.log(JSON.stringify(req.file))
   res.status(201).send('Profile picture uploaded');
 })
 
@@ -123,15 +140,34 @@ app.post('/api/login', async (req, res) => {
             res.status(404).send('User not found');
         } else {
             const user = result.rows[0];
-            console.log('User: ', user.name);
-            console.log('Password: ', user.password_hash);
+            // console.log('User: ', user.name);
+            // console.log('Password: ', user.password_hash);
             if (bcrypt.compareSync(password, user.password_hash)) {
-                res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
+                // res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
+                req.session.userID = user.id;
+                req.session.authenticated = true;
+                req.session.save((err) => {
+                    if (err) {
+                        return res.status(500).send('Failed to save session');
+                    }
+                    // console.log(req.session); // Should print the session with user_id
+                    // res.redirect('/');
+                });
                 res.status(200).send(user);
             } else {
                 res.status(401).send('Wrong password');
             }
         }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/api/user', async (req, res) => {
+    try {
+        // console.log(req.session);
+        return res.json({'authenticated': req.session.authenticated});
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -152,7 +188,9 @@ app.post('/api/signup', async (req, res) => {
             );
             const query = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
             const user = query.rows[0];
-            res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
+            // res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
+            req.session.user = user;
+            req.session.authenticated = true;
             res.status(201).send(user);
         }
     } catch (err) {
@@ -162,7 +200,19 @@ app.post('/api/signup', async (req, res) => {
 });
 
 app.get('/api/logout', (req, res) => {
-    res.clearCookie('authToken');
+    // res.clearCookie('authToken');
+    // req.session = null;
+    req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).send("Failed to log out.");
+        }
+        res.clearCookie("connect.sid", {
+          path: "/",
+          sameSite: "None",
+          secure: true,
+        }); // This line ensures the cookie is cleared
+        res.sendStatus(200);
+    });
     res.status(200).send('Logged out');
 });
 

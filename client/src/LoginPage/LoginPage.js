@@ -38,9 +38,11 @@ function login() {
     axiosInstance.post('/api/login', {
         email: email,
         password: password
+    }, {
+        withCredentials: true,
     }).then(response => {
         console.log(response.data);
-        document.cookie = 'authToken=' + response.data.id;
+        // document.cookie += 'authToken=' + response.data.id;
         window.location.href = '/';
     }).catch(error => {
         console.log(error.response.data);
@@ -57,9 +59,11 @@ function signup() {
         name: name,
         email: email,
         password: password
+    }, {
+        withCredentials: true
     }).then(response => {
         console.log(response.data);
-        document.cookie = 'authToken=' + response.data.id;
+        // document.cookie = 'authToken=' + response.data.id;
         window.location.href = '/';
     }).catch(error => {
         console.log(error.response.data);

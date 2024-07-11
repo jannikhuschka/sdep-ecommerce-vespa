@@ -19,13 +19,18 @@ function ProfilePage() {
     const submit = async () => {
         let formData = new FormData();
             await formData.append('profile-pic', image.raw);
+            // fetch('http://localhost:5001/api/profile-picture', {
+            //     method: 'POST',
+            //     body: formData,
+            // });
             const axiosInstance = axios.create({
                 baseURL: 'http://localhost:5001',
+                withCredentials: true,
             });
             await axiosInstance
               .post(`/api/profile-picture`, formData , {
                 headers: {
-                  'Content-Type': 'multipart/form-data',
+                  'enctype': 'multipart/form-data',
                 },
               })
               .then((res) => {
