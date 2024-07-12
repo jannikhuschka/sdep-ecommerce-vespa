@@ -3,7 +3,7 @@ import './ScooterCard.css'
 function ScooterCard({ scooter }) {
     return (
         <div className="scooter-card">
-            <img src={scooter.image_url} alt={scooter.name} />
+            <img src={scooter.images[0]} alt={scooter.name} />
             <h2>{scooter.name}</h2>
             <p>{scooter.description}</p>
             <p>€{scooter.price}</p>

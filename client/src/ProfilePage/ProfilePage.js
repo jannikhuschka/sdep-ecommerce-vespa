@@ -32,7 +32,7 @@ function ProfilePage() {
                 headers: {
                   'enctype': 'multipart/form-data',
                 },
-              })
+              }, { withCredentials: true })
               .then((res) => {
                 console.log(res.data);
               });

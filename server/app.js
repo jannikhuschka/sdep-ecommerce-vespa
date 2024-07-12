@@ -4,13 +4,16 @@ const PgSession = require('connect-pg-simple')(session);
 const cors = require('cors');
 const { Pool } = require('pg');
 const path = require('path');
-
+const fs = require('fs');
 const app = express();
 const port = 5001;
 const bcrypt = require('bcryptjs');
 const jimp = require('jimp');
 const multer = require('multer');
+const bodyParser = require('body-parser');
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cors({
     origin: 'http://localhost:3000',
     methods: 'GET,POST,PUT,DELETE',
@@ -55,7 +58,8 @@ var profilePicStorage = multer.diskStorage({
       cb(null, './images/profile')
     },
     filename: function (req, file, cb) {
-      cb(null, 'A' + path.extname(file.originalname))
+      console.log(req.session);
+      cb(null, String(req.session.userID) + path.extname(file.originalname))
     }
 })
 var profilePicUpload = multer({ storage: profilePicStorage });
@@ -72,7 +76,16 @@ app.post('/api/profile-picture', profilePicUpload.single('profile-pic'), functio
 
 app.get('/api/products', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM scooters');
+        var result = await pool.query('SELECT * FROM scooters');
+        for (let i = 0; i < result.rows.length; i++) {
+            const id = result.rows[i].id;
+            const dir = `./images/scooters/${id}`;
+            const files = fs.readdirSync(dir);
+            result.rows[i].images = [];
+            for (let j = 0; j < files.length; j++) {
+                result.rows[i].images.push(`http://localhost:5001/images/scooters/${id}/${files[j]}`);
+            }
+        }
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -86,7 +99,7 @@ app.get('/api/products/filtered', async (req, res) => {
         const priceRange = req.query.priceRange;
         const yearRange = req.query.yearRange;
         const powerRange = req.query.powerRange;
-        const result = await pool.query(`
+        var result = await pool.query(`
             SELECT *
             FROM scooters
             WHERE (LOWER(name) ILIKE LOWER($1)
@@ -96,6 +109,15 @@ app.get('/api/products/filtered', async (req, res) => {
             AND year >= $4 AND year <= $5
             AND power >= $6 AND power <= $7
             `, ['%' + search + '%', priceRange[0], priceRange[1], yearRange[0], yearRange[1], powerRange[0], powerRange[1]]);
+        for (let i = 0; i < result.rows.length; i++) {
+            const id = result.rows[i].id;
+            const dir = `./images/scooters/${id}`;
+            const files = fs.readdirSync(dir);
+            result.rows[i].images = [];
+            for (let j = 0; j < files.length; j++) {
+                result.rows[i].images.push(`http://localhost:5001/images/scooters/${id}/${files[j]}`);
+            }
+        }
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -120,16 +142,50 @@ app.get('/api/products/extremeValues', async (req, res) => {
 app.post('/api/products', async (req, res) => {
     console.log('Adding scooter');
     try {
-        const { name, description, year, model, power, price, owner } = req.body;
-        await pool.query(
-            'INSERT INTO scooters (name, description, year, model, power, price, owner) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [name, description, year, model, power, price, owner]
+        console.log(req.body);
+        // const { name, description, year, model, power, price } = req.body
+        // const owner = req.session.userID;
+        const result = await pool.query(
+            'INSERT INTO scooters (name, description, year, model, power, price, owner) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            [req.body.name, req.body.description, req.body.year, req.body.model, req.body.power, req.body.price, req.session.userID]
         );
-        res.status(201).send('Scooter added');
+        const id = result.rows[0].id;
+        res.status(201).json({ 'id': id });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
+});
+
+app.post('/api/products/:id/images', async (req, res) => {
+        const id = req.params.id;
+        console.log('Adding images for scooter with id: ', id);
+
+        // create folder for scooter images with respective id
+        const dir = `./images/scooters/${id}`;
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        // upload images sent via the request
+        var scooterPicsStorage = multer.diskStorage({
+            destination: function (req, file, cb) {
+                cb(null, dir)
+            },
+            filename: function (req, file, cb) {
+                cb(null, file.originalname)
+            }
+        })
+        var scooterPicsUpload = multer({ storage: scooterPicsStorage });
+
+        scooterPicsUpload.array('scooter-pictures', 10)(req, res, function (err) {
+            if (err) {
+                console.log(err);
+                return res.status(500).send('Server error');
+            }
+        });
+
+        res.status(201).send('Scooter added');
 });
 
 app.post('/api/login', async (req, res) => {
@@ -199,20 +255,12 @@ app.post('/api/signup', async (req, res) => {
     }
 });
 
-app.get('/api/logout', (req, res) => {
-    // res.clearCookie('authToken');
-    // req.session = null;
-    req.session.destroy((err) => {
-        if (err) {
-          return res.status(500).send("Failed to log out.");
-        }
-        res.clearCookie("connect.sid", {
-          path: "/",
-          sameSite: "None",
-          secure: true,
-        }); // This line ensures the cookie is cleared
-        res.sendStatus(200);
-    });
+app.post('/api/logout', async (req, res) => {
+    req.session = null;
+    res.clearCookie("connect.sid", {
+        path: "/",
+        sameSite: "none",
+    }); // This line ensures the cookie is cleared
     res.status(200).send('Logged out');
 });
 

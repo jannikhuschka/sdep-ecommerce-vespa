@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 // import { useState } from 'react';
@@ -8,7 +8,9 @@ import '../App.css';
 
 function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false); 
-    getIsLoggedIn();
+    useEffect(() => {
+        getIsLoggedIn();
+    }, []);
     // const isLoggedIn = expressSession.authenticated;
     return (
         <nav className="navbar">
@@ -38,7 +40,7 @@ function Navbar() {
         })
         .then((response) => response.json())
         .then((data) => {
-            console.log(data);
+            // console.log(data);
             setIsLoggedIn(data.authenticated);
         });
     }
@@ -50,9 +52,14 @@ function login() {
     window.location.href = '/login';
 }
 
-function logout() {
+async function logout() {
     console.log(document.cookie);
     // document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    const logout = await fetch("http://localhost:5001/api/logout", {
+        method: 'POST',
+        credentials: 'include',
+    })
+    console.log(logout);
     window.location.href = '/';
 }
 
