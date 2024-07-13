@@ -37,19 +37,11 @@ function SellPage() {
                         className="my-10 mx-5"
                         />
                     ))
-                    // <img
-                    // src={images[0].preview}
-                    // alt="dummy"
-                    // width="300"
-                    // height="300"
-                    // className="my-10 mx-5"
-                    // />
                 ) : (
                     <>
                     <p className="text-white text-1xl text-left w-full text-left button">
                         Upload Images
                     </p>
-                    {/* <div className={style.wrapper} /> */}
                     </>
                 )}
             </label>
@@ -74,6 +66,21 @@ function sell() {
     const model = document.getElementById('model').value;
     const power = document.getElementById('power').value;
     const price = document.getElementById('price').value;
+    const images = document.getElementById('upload-button').files;
+    console.log(images);
+    if (!name || !description || !year || !model || !power || !price || images.length == 0) {
+        var alert = 'Please fill in all fields.\nThe following inputs are missing:\n';
+        if (images.length == 0) alert += 'At least one image, ';
+        if (!name) alert += 'Name, ';
+        if (!description) alert += 'Description, ';
+        if (!year) alert += 'Year, ';
+        if (!model) alert += 'Model, ';
+        if (!power) alert += 'Power, ';
+        if (!price) alert += 'Price, ';
+        alert = alert.slice(0, -2) + '.';
+        window.alert(alert);
+        return;
+    }
     console.log("Selling scooter");
     // DB Access to add scooter
     const addScooter = async () => {
@@ -89,7 +96,6 @@ function sell() {
               });
 
             var formData = new FormData();
-            const images = document.getElementById('upload-button').files;
             for (let i = 0; i < images.length; i++) {
                 formData.append('scooter-pictures', images[i]);
             }
@@ -102,6 +108,7 @@ function sell() {
               })
               .then((res) => {
                 console.log(res.data);
+                window.document.location.href = '/search';
               });
         } catch (error) {
             console.error('Error adding scooter:', error);

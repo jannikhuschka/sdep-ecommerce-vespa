@@ -40,8 +40,8 @@ function Navbar() {
         })
         .then((response) => response.json())
         .then((data) => {
-            // console.log(data);
-            setIsLoggedIn(data.authenticated);
+            console.log(data);
+            setIsLoggedIn(data.id !== undefined);
         });
     }
 }

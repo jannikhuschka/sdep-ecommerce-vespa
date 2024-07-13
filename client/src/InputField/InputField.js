@@ -5,7 +5,7 @@ function InputField({id, name, placeholder = "Enter ", type = "text"}) {
         <div className="input-container">
             {/* <label for={id}>{name.value}</label> */}
             <p>{name}</p>
-            <input id={id} name={id} type={type} placeholder={placeholder + name}></input>
+            <input id={id} name={id} type={type} placeholder={placeholder + name} ></input>
         </div>
     );
 }

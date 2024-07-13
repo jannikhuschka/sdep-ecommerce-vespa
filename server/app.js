@@ -8,9 +8,9 @@ const fs = require('fs');
 const app = express();
 const port = 5001;
 const bcrypt = require('bcryptjs');
-const jimp = require('jimp');
 const multer = require('multer');
 const bodyParser = require('body-parser');
+const sharp = require('sharp');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -53,40 +53,99 @@ app.use(
     })
   );
 
-var profilePicStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, './images/profile')
-    },
-    filename: function (req, file, cb) {
-      console.log(req.session);
-      cb(null, String(req.session.userID) + path.extname(file.originalname))
+// var profilePicStorage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, './images/profile')
+//     },
+//     filename: function (req, file, cb) {
+//       console.log(req.session);
+//       cb(null, String(req.session.userID) + path.extname(file.originalname))
+//     }
+// })
+var imageMemoryStorage = multer.memoryStorage();
+const imageFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith("image")) {
+      cb(null, true);
+    } else {
+      cb("Please upload only images.", false);
     }
-})
-var profilePicUpload = multer({ storage: profilePicStorage });
+};
+var imageUpload = multer({ storage: imageMemoryStorage, fileFilter: imageFilter });
+
+const manipulateProfilePic = async (req, res, next) => {
+    if (!req.file) {
+        return next();
+    }
+    try {
+        // crop image to square and resize to 512x512, then save as png
+        await sharp(req.file.buffer).resize({ width: 512, height: 512, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ quality: 90 }).toFile(`./images/profile/${req.session.userID}.png`);
+        next();
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+}
+
+const manipulateScooterPics = async (req, res, next) => {
+    if (!req.files) {
+        return next();
+    }
+    try {
+        const id = req.params.id;
+        console.log('Adding images for scooter with id: ', id);
+
+        // create folder for scooter images with respective id
+        const dir = `./images/scooters/${id}`;
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        // resize to contain in 1920x1080, then save as png with index as file name
+        for (let i = 0; i < req.files.length; i++) {
+            await sharp(req.files[i].buffer).resize({ width: 1920, height: 1080, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ quality: 90 }).toFile(`./images/scooters/${id}/${i + 1}.png`);
+            // await sharp(req.files[i].buffer).resize({ width: 1920, height: 1080 }).jpeg({ quality: 90 }).toFile(`./images/scooters/${id}/${i + 1}.jpeg`);
+        }
+
+        // 512x512 preview image
+        await sharp(req.files[0].buffer).resize({ width: 512, height: 512 }).png({ quality: 90 }).toFile(`./images/scooters/${id}/preview.png`);
+        return res.status(201).send('Images uploaded');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+}
 
 app.use(express.static(__dirname + '/public'));
 app.use('/images', express.static('images'))
 
-app.post('/api/profile-picture', profilePicUpload.single('profile-pic'), function async (req, res, next) {
-//   console.log(req.session.userID);
+function getImagesForScooters(rows) {
+    for (let i = 0; i < rows.length; i++) {
+        const id = rows[i].id;
+        const dir = `./images/scooters/${id}`;
+        const files = fs.readdirSync(dir);
+        rows[i].images = [];
+        for (let j = 0; j < files.length; j++) {
+            if (files[j] === 'preview.png') {
+                rows[i].preview = `http://localhost:5001/images/scooters/${id}/preview.png`;
+                continue;
+            }
+            rows[i].images.push(`http://localhost:5001/images/scooters/${id}/${files[j]}`);
+        }
+        rows[i].profilePic = `http://localhost:5001/images/profile/${rows[i].owner}.png`;
+    }
+    console.log(rows);
+    return rows;
+}
+
+app.post('/api/profile-picture', imageUpload.single('profile-pic'), manipulateProfilePic, function async (req, res, next) {
   console.log(req.session);
-//   console.log(JSON.stringify(req.file))
   res.status(201).send('Profile picture uploaded');
 })
 
 app.get('/api/products', async (req, res) => {
     try {
-        var result = await pool.query('SELECT * FROM scooters');
-        for (let i = 0; i < result.rows.length; i++) {
-            const id = result.rows[i].id;
-            const dir = `./images/scooters/${id}`;
-            const files = fs.readdirSync(dir);
-            result.rows[i].images = [];
-            for (let j = 0; j < files.length; j++) {
-                result.rows[i].images.push(`http://localhost:5001/images/scooters/${id}/${files[j]}`);
-            }
-        }
-        res.json(result.rows);
+        var result = await pool.query('SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name FROM (scooters JOIN users ON scooters.owner = users.id)');
+        res.json(getImagesForScooters(result.rows));
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -100,25 +159,16 @@ app.get('/api/products/filtered', async (req, res) => {
         const yearRange = req.query.yearRange;
         const powerRange = req.query.powerRange;
         var result = await pool.query(`
-            SELECT *
-            FROM scooters
-            WHERE (LOWER(name) ILIKE LOWER($1)
+            SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name
+            FROM (scooters JOIN users ON scooters.owner = users.id)
+            WHERE (LOWER(scooters.name) ILIKE LOWER($1)
             OR LOWER(description) ILIKE LOWER($1)
             OR LOWER(model) ILIKE LOWER($1))
             AND price >= $2 AND price <= $3
             AND year >= $4 AND year <= $5
             AND power >= $6 AND power <= $7
             `, ['%' + search + '%', priceRange[0], priceRange[1], yearRange[0], yearRange[1], powerRange[0], powerRange[1]]);
-        for (let i = 0; i < result.rows.length; i++) {
-            const id = result.rows[i].id;
-            const dir = `./images/scooters/${id}`;
-            const files = fs.readdirSync(dir);
-            result.rows[i].images = [];
-            for (let j = 0; j < files.length; j++) {
-                result.rows[i].images.push(`http://localhost:5001/images/scooters/${id}/${files[j]}`);
-            }
-        }
-        res.json(result.rows);
+        res.json(getImagesForScooters(result.rows));
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -157,36 +207,7 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-app.post('/api/products/:id/images', async (req, res) => {
-        const id = req.params.id;
-        console.log('Adding images for scooter with id: ', id);
-
-        // create folder for scooter images with respective id
-        const dir = `./images/scooters/${id}`;
-        if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
-        }
-
-        // upload images sent via the request
-        var scooterPicsStorage = multer.diskStorage({
-            destination: function (req, file, cb) {
-                cb(null, dir)
-            },
-            filename: function (req, file, cb) {
-                cb(null, file.originalname)
-            }
-        })
-        var scooterPicsUpload = multer({ storage: scooterPicsStorage });
-
-        scooterPicsUpload.array('scooter-pictures', 10)(req, res, function (err) {
-            if (err) {
-                console.log(err);
-                return res.status(500).send('Server error');
-            }
-        });
-
-        res.status(201).send('Scooter added');
-});
+app.post('/api/products/:id/images', imageUpload.array('scooter-pictures', 10), manipulateScooterPics);
 
 app.post('/api/login', async (req, res) => {
     try {
@@ -221,12 +242,19 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.get('/api/user', async (req, res) => {
+    console.log(req.session);
     try {
-        // console.log(req.session);
-        return res.json({'authenticated': req.session.authenticated});
+        const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userID]);
+        if (result.rows.length === 0) {
+            return res.status(200).json({ message: 'User not found' });
+        }
+        const user = result.rows[0];
+        const wishlistResult = await pool.query('SELECT scooter_id FROM wishlist WHERE user_id = $1', [user.id]);
+        user.wishlist = wishlistResult.rows.map(row => row.scooter_id);
+        res.status(200).json(user);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -244,8 +272,8 @@ app.post('/api/signup', async (req, res) => {
             );
             const query = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
             const user = query.rows[0];
-            // res.cookie('authToken', user.id, { maxAge: 24 * 60 * 60, httpOnly: true });
-            req.session.user = user;
+            fs.copyFileSync('./images/profile/default.png', `./images/profile/${user.id}.png`);
+            req.session.userID = user.id;
             req.session.authenticated = true;
             res.status(201).send(user);
         }
@@ -262,6 +290,31 @@ app.post('/api/logout', async (req, res) => {
         sameSite: "none",
     }); // This line ensures the cookie is cleared
     res.status(200).send('Logged out');
+});
+
+app.post('/api/wishlist', async (req, res) => {
+    try {
+        const { scooterId } = req.body;
+        const userId = req.session.userID;
+        await pool.query('INSERT INTO wishlist (user_id, scooter_id) VALUES ($1, $2)', [userId, scooterId]);
+        res.status(201).send('Added to wishlist');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.delete('/api/wishlist', async (req, res) => {
+    try {
+        const { scooterId } = req.body;
+        const userId = req.session.userID;
+        await pool.query('DELETE FROM wishlist WHERE user_id = $1 AND scooter_id = $2', [userId, scooterId]);
+        res.status(200).send('Removed from wishlist');
+    }
+    catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
 });
 
 // Serve static files from the React app

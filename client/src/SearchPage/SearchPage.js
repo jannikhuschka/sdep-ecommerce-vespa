@@ -27,9 +27,17 @@ function SearchPage() {
             try {
                 const axiosInstance = axios.create({
                     baseURL: 'http://localhost:5001',
+                    withCredentials: true,
                 });
-                const response = await axiosInstance.get('/api/products');
-                setScooters(response.data);
+                const scooters = (await axiosInstance.get('/api/products')).data;
+                const user = (await axiosInstance.get('/api/user')).data;
+                if (user.id) {
+                    for (var i = 0; i < scooters.length; i++) {
+                        if (scooters[i].owner === user.id) continue;
+                        scooters[i].wishlisted = user.wishlist.includes(scooters[i].id);
+                    }
+                }
+                setScooters(scooters);
             } catch (error) {
                 console.error('Error fetching scooters:', error);
             }
@@ -81,18 +89,6 @@ function SearchPage() {
             <div className="search-container">
                 <div className="search-sidebar">
                     <InputField id="search" name="Search" placeholder="" />
-                    {/* <div className="scooter-filter">
-                        <p>Price Range: {priceRange[0]}€ to {priceRange[1]}€</p>
-                        <RangeSlider min={globalPriceRange[0]} max={globalPriceRange[1]} value={priceRange} onInput={setPriceRange} />
-                    </div>
-                    <div className="scooter-filter">
-                        <p>Year: {yearRange[0]} to {yearRange[1]}</p>
-                        <RangeSlider min={globalYearRange[0]} max={globalYearRange[1]} value={yearRange} onInput={setYearRange} />
-                    </div>
-                    <div className="scooter-filter">
-                        <p>Power: {powerRange[0]}cc to {powerRange[1]}cc</p>
-                        <RangeSlider min={globalPowerRange[0]} max={globalPowerRange[1]} value={powerRange} onInput={setPowerRange} />
-                    </div> */}
                     <ValueRangeSlider array={priceRange} setArrayFunction={setPriceRange} globalArray={globalPriceRange} name="Price" unit='€' />
                     <ValueRangeSlider array={yearRange} setArrayFunction={setYearRange} globalArray={globalYearRange} name="Year" />
                     <ValueRangeSlider array={powerRange} setArrayFunction={setPowerRange} globalArray={globalPowerRange} name="Power" unit='cc' />
@@ -100,13 +96,7 @@ function SearchPage() {
                 </div>
                 <div id="scooters" className="scooters">
                     {scooters.map(scooter => (
-                        <ScooterCard scooter={scooter} />
-                        // <div key={scooter.id} className="scooter-card">
-                        //     <img src={scooter.image_url} alt={scooter.name} />
-                        //     <h2>{scooter.name}</h2>
-                        //     <p>{scooter.description}</p>
-                        //     <p>€{scooter.price}</p>
-                        // </div>
+                        <ScooterCard scooter={scooter} key={scooter.id} />
                     ))}
                 </div>
             </div>
