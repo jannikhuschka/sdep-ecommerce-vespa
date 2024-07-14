@@ -14,9 +14,16 @@
 }
 
 .scooter-details {
+  align-items: baseline;
+}
+
+.scooter-secondary {
+  align-items: center;
+}
+
+.scooter-card > div {
   display: flex;
   flex-direction: row;
-  align-items: baseline;
   justify-content: space-between;
 }
 

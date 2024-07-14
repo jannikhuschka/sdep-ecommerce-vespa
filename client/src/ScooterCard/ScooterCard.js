@@ -14,28 +14,30 @@ function ScooterCard({ scooter }) {
                 <div><p>€{scooter.price}</p></div>
             </div>
             {/* <p>{scooter.description}</p> */}
-            <div className="scooter-owner">
-                <img src={scooter.profilePic} alt={scooter.owner_name} className='profile-pic' />
-                <div><p>{scooter.owner_name}</p></div>
-                { wishlisted !== undefined && 
-                    // <div><p>{scooter.wishlisted ? '-' : '+'}</p></div>
-                    WishlistButton({ wishlisted: wishlisted, clickFunction: async () => {
-                        console.log('Wishlist button clicked');
-                        console.log("A");
-                        await fetch("http://localhost:5001/api/wishlist", {
-                            method: wishlisted ? 'DELETE' : 'POST',
-                            credentials: 'include',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ scooterId: scooter.id }),
-                        })
-                        .then((data) => {
-                            console.log(data);
-                            setWishlisted(!wishlisted);
-                        });
-                    }})
-                }
+            <div className="scooter-secondary">
+                <div className="scooter-owner">
+                    <img src={scooter.profilePic} alt={scooter.owner_name} className='profile-pic' />
+                    <div><p>{scooter.owner_name}</p></div>
+                </div>
+                <div className="scooter-buttons">
+                    { wishlisted !== undefined && 
+                        // <div><p>{scooter.wishlisted ? '-' : '+'}</p></div>
+                        WishlistButton({ wishlisted: wishlisted, clickFunction: async () => {
+                            await fetch("http://localhost:5001/api/wishlist", {
+                                method: wishlisted ? 'DELETE' : 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ scooterId: scooter.id }),
+                            })
+                            .then((data) => {
+                                console.log(data);
+                                setWishlisted(!wishlisted);
+                            });
+                        }})
+                    }
+                </div>
             </div>
         </div>
     );

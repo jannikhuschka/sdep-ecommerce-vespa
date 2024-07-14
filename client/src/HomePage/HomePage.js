@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom';
 import '../App.css';
 import './HomePage.css';
 import { existsCookie } from '../Navbar/Navbar';
+import { getIsLoggedIn } from '../Navbar/Navbar';
 
 function HomePage() {
+    const isLoggedIn = getIsLoggedIn();
+
     return (
         <div className="container">
             <h1>eCommerce Motorini</h1>
@@ -18,7 +21,7 @@ function HomePage() {
             <div className="centered">
                 <p>Sell the perfect scooter for others, tomorrow</p>
             </div>
-            <Link to={existsCookie("authToken") ? "/sell" : "login"} className="button">Start selling</Link>
+            <Link to={isLoggedIn ? "/sell" : "/login"} className="button">Start selling</Link>
         </div>
     );
 }

@@ -51,7 +51,7 @@ function SearchPage() {
                 const response = await axiosInstance.get('/api/products/extremeValues', {
                     params: { attribute: attribute },
                 });
-                console.log('Extreme Values for ' + attribute + ': ', response.data);
+                // console.log('Extreme Values for ' + attribute + ': ', response.data);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching extreme value:', error);

@@ -209,6 +209,71 @@ app.post('/api/products', async (req, res) => {
 
 app.post('/api/products/:id/images', imageUpload.array('scooter-pictures', 10), manipulateScooterPics);
 
+app.get('/api/wishlist', async (req, res) => {
+    try {
+        const userId = req.session.userID;
+        if (!userId) {
+            return res.status(401).send('Not logged in');
+        }
+        const result = await pool.query(`
+            SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name
+            FROM ((scooters JOIN users ON scooters.owner = users.id) JOIN wishlist ON scooters.id=scooter_id)
+            WHERE wishlist.user_id = $1`,
+            [userId]);
+        res.json(getImagesForScooters(result.rows));
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        const userId = req.session.userID;
+        if (!userId) {
+            return res.status(401).send('Not logged in');
+        }
+
+        // get all messages concerning user
+        const messages = await pool.query(`
+            SELECT * FROM ((messages JOIN users AS sender ON sender_id=sender.id) JOIN users AS receiver ON receiver_id=receiver.id) WHERE sender_id = $1 OR receiver_id = $1 ORDER BY scooter_id, timestamp`,
+            [userId]);
+
+        // get all scooters concerning messages
+        // const scooters = await pool.query('SELECT * FROM scooters WHERE id IN $1 ORDER BY id', [messages.rows.map(row => row.scooter_id)]);
+        var scooters = await pool.query(`
+            SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name
+            FROM (scooters JOIN users ON scooters.owner = users.id)
+            WHERE EXISTS (SELECT 1 FROM messages WHERE scooter_id = scooters.id AND (sender_id = $1 OR receiver_id = $1))
+            ORDER BY scooters.id
+            `, [userId]);
+        
+        // create dict that maps scooter id to scooter
+        const scooterDict = {};
+        for (let i = 0; i < scooters.rows.length; i++) {
+            scooterDict[scooters.rows[i].id] = scooters.rows[i];
+        }
+
+        // add messages to respective scooters
+        for (let i = 0; i < messages.rows.length; i++) {
+            const scooter = scooterDict[messages.rows[i].scooter_id];
+            if (!scooter.messages) scooter.messages = [];
+            scooter.messages.push(messages.rows[i]);
+        }
+
+        // put elements from dict back into array
+        scooters = [];
+        for (const key in scooterDict) {
+            scooters.push(scooterDict[key]);
+        }
+
+        res.json(getImagesForScooters(scooters));
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;

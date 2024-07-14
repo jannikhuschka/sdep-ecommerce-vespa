@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import HomePage from './HomePage/HomePage';
 import SearchPage from './SearchPage/SearchPage';
 import SellPage from './SellPage/SellPage';
+import WishlistPage from './WishlistPage/WishlistPage';
+import MessagesPage from './MessagesPage/MessagesPage';
 import ProfilePage from './ProfilePage/ProfilePage';
 import LoginPage from './LoginPage/LoginPage';
 import Navbar from './Navbar/Navbar';
@@ -27,6 +29,8 @@ function App() {
                     <Route path="/" exact element={<HomePage />} />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/sell" element={<SellPage />} />
+                    <Route path="/wishlist" element={<WishlistPage />} />
+                    <Route path="/messages" element={<MessagesPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/login" element={<LoginPage />} />
                 </Routes>

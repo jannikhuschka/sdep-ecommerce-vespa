@@ -9,9 +9,19 @@ import '../App.css';
 function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false); 
     useEffect(() => {
-        getIsLoggedIn();
+        async function getLoggedIn() {
+            fetch("http://localhost:5001/api/user", {
+                method: 'GET',
+                credentials: 'include',
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                // console.log(data);
+                setIsLoggedIn(data.id !== undefined);
+            });
+        }
+        getLoggedIn();
     }, []);
-    // const isLoggedIn = expressSession.authenticated;
     return (
         <nav className="navbar">
             <div className="navbar-left">
@@ -21,6 +31,8 @@ function Navbar() {
                 <div className="navbar-right">
                     <Link to="/search" className="link">Search</Link>
                     <Link to="/sell" className="link">Sell</Link>
+                    <Link to="/wishlist" className="link">Wishlist</Link>
+                    <Link to="/messages" className="link">Messages</Link>
                     <Link to="/profile" className="link">Profile</Link>
                     <button onClick={logout} className="button">Log out</button>
                 </div>
@@ -32,21 +44,10 @@ function Navbar() {
             }
         </nav>
     );
-
-    async function getIsLoggedIn() {
-        fetch("http://localhost:5001/api/user", {
-            method: 'GET',
-            credentials: 'include',
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            console.log(data);
-            setIsLoggedIn(data.id !== undefined);
-        });
-    }
 }
 
 export default Navbar;
+export { getIsLoggedIn }
 
 function login() {
     window.location.href = '/login';
@@ -54,7 +55,6 @@ function login() {
 
 async function logout() {
     console.log(document.cookie);
-    // document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     const logout = await fetch("http://localhost:5001/api/logout", {
         method: 'POST',
         credentials: 'include',
@@ -63,25 +63,13 @@ async function logout() {
     window.location.href = '/';
 }
 
-export function existsCookie(name) {
-    return false;
-    // var dc = document.cookie;
-    // var prefix = name + "=";
-    // var begin = dc.indexOf("; " + prefix);
-    // if (begin == -1) {
-    //     begin = dc.indexOf(prefix);
-    //     if (begin != 0) return null;
-    // }
-    // else
-    // {
-    //     begin += 2;
-    //     var end = document.cookie.indexOf(";", begin);
-    //     if (end == -1) {
-    //     end = dc.length;
-    //     }
-    // }
-    // // because unescape has been deprecated, replaced with decodeURI
-    // //return unescape(dc.substring(begin + prefix.length, end));
-    // const decoded = decodeURI(dc.substring(begin + prefix.length, end));
-    // return decoded != null;
-} 
+async function getIsLoggedIn() {
+    fetch("http://localhost:5001/api/user", {
+        method: 'GET',
+        credentials: 'include',
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        return data.id !== undefined;
+    });
+}
