@@ -35,7 +35,7 @@ function MessagesPage() {
                         <h2>{scooter.name}</h2>
                         <div className='scooter-messages'>
                             {scooter.messages.map(message => (
-                                <Message message={message} key={message.id} />
+                                <Message message={message} isOwnScooter={scooter.isOwnScooter} key={message.id} />
                             ))}
                         </div>
                     </div>

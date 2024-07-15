@@ -133,7 +133,7 @@ function getImagesForScooters(rows) {
         }
         rows[i].profilePic = `http://localhost:5001/images/profile/${rows[i].owner}.png`;
     }
-    console.log(rows);
+    // console.log(rows);
     return rows;
 }
 
@@ -236,7 +236,10 @@ app.get('/api/messages', async (req, res) => {
 
         // get all messages concerning user
         const messages = await pool.query(`
-            SELECT * FROM ((messages JOIN users AS sender ON sender_id=sender.id) JOIN users AS receiver ON receiver_id=receiver.id) WHERE sender_id = $1 OR receiver_id = $1 ORDER BY scooter_id, timestamp`,
+            SELECT messages.id AS id, scooter_id, buyer_id, owner_id, message_buyer, message_seller, state, timestamp, buyer.name AS buyer_name, owner.name AS owner_name
+            FROM ((messages JOIN users AS buyer ON buyer_id=buyer.id) JOIN users AS owner ON owner_id=owner.id)
+            WHERE buyer_id = $1 OR owner_id = $1
+            ORDER BY scooter_id, timestamp`,
             [userId]);
 
         // get all scooters concerning messages
@@ -244,13 +247,14 @@ app.get('/api/messages', async (req, res) => {
         var scooters = await pool.query(`
             SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name
             FROM (scooters JOIN users ON scooters.owner = users.id)
-            WHERE EXISTS (SELECT 1 FROM messages WHERE scooter_id = scooters.id AND (sender_id = $1 OR receiver_id = $1))
+            WHERE EXISTS (SELECT 1 FROM messages WHERE scooter_id = scooters.id AND (buyer_id = $1 OR owner_id = $1))
             ORDER BY scooters.id
             `, [userId]);
         
         // create dict that maps scooter id to scooter
         const scooterDict = {};
         for (let i = 0; i < scooters.rows.length; i++) {
+            scooters.rows[i].isOwnScooter = scooters.rows[i].owner === userId;
             scooterDict[scooters.rows[i].id] = scooters.rows[i];
         }
 
@@ -268,6 +272,73 @@ app.get('/api/messages', async (req, res) => {
         }
 
         res.json(getImagesForScooters(scooters));
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.post('/api/messages', async (req, res) => {
+    try {
+        const { scooter } = req.body;
+        const user = (await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userID])).rows[0];
+        const owner = (await pool.query('SELECT * FROM users WHERE id = $1', [scooter.owner])).rows[0];
+        const message_buyer = "You sent a buying request for " + scooter.name + " to " + owner.name;
+        const message_seller = user.name + " sent you a buying request.";
+        await pool.query(
+            'INSERT INTO messages (scooter_id, buyer_id, owner_id, message_buyer, message_seller, timestamp, state) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [scooter.id, user.id, owner.id, message_buyer, message_seller, new Date(), 'offer']
+        );
+        res.status(201).send('Message sent');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.put('/api/messages/:id', async (req, res) => {
+    try {
+        const messageId = req.params.id;
+        const { state } = req.body;
+        const buyer = (await pool.query('SELECT * FROM (messages JOIN users ON buyer_id=users.id) WHERE messages.id = $1', [messageId])).rows[0];
+        const owner = (await pool.query('SELECT * FROM (messages JOIN users ON owner_id=users.id) WHERE messages.id = $1', [messageId])).rows[0];
+        console.log(messageId);
+        console.log(buyer);
+        console.log(owner);
+        var message_buyer, message_seller;
+        switch (state) {
+            case 'accept-owner':
+                message_buyer = owner.name + " has accepted your buying request.";
+                message_seller = "You accepted " + buyer.name + "'s buying request.";
+                break;
+            case 'accept-both':
+                message_buyer = "You and " + owner.name + " accepted the buying request.";
+                message_seller = "You and " + buyer.name + " accepted the buying request.";
+                break;
+            case 'rejected':
+                message_buyer = "Your buying request to " + owner.name + " has been rejected.";
+                message_seller = "You rejected the buying request from " + buyer.name;
+                break;
+            default:
+                return res.status(400).send('Invalid state');
+        }
+        await pool.query(
+            'UPDATE messages SET state = $1, message_buyer = $3, message_seller = $4, timestamp = $5 WHERE id = $2',
+            [state, messageId, message_buyer, message_seller, new Date()]
+            );
+        res.status(200).send('Message updated');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.delete('/api/messages/:id', async (req, res) => {
+    try {
+        const messageId = req.params.id;
+        console.log("message ID: " + messageId);
+        await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
+        res.status(200).send('Message deleted');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

@@ -45,22 +45,21 @@ ON CONFLICT DO NOTHING;
 
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
-    sender_id INTEGER,
-    receiver_id INTEGER,
+    buyer_id INTEGER,
     scooter_id INTEGER,
-    kind VARCHAR(10),
-    message TEXT,
+    owner_id INTEGER,
+    state VARCHAR(20),
+    message_buyer TEXT,
+    message_seller TEXT,
     timestamp TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id),
+    FOREIGN KEY (buyer_id) REFERENCES users(id),
     FOREIGN KEY (scooter_id) REFERENCES scooters(id),
-    CHECK (kind IN ('offer', 'accept', 'reject'))
+    CHECK (state IN ('offer', 'accept-owner', 'accept-both', 'reject'))
 );
 
-INSERT INTO messages (sender_id, receiver_id, scooter_id, kind, message, timestamp) VALUES
-    (1, 2, 2, 'offer', 'I would like to buy your scooter.', '2021-06-01 12:00:00'),
-    (2, 1, 2, 'reject', 'I am sorry, I am not interested.', '2021-06-01 12:01:00'),
-    (2, 1, 1, 'offer', 'I would like to buy your scooter.', '2021-06-01 12:02:00')
+INSERT INTO messages (buyer_id, scooter_id, owner_id, state, message_buyer, message_seller, timestamp) VALUES
+    (1, 2, 2, 'offer', 'You have sent a buying request to Chiara.', 'Jannik would like to buy your scooter.', '2021-06-01 12:00:00'),
+    (2, 1, 1, 'accept-owner', 'Jannik has agreed to sell you their scooter.', 'You accepted the buying request from Chiara.', '2021-06-01 12:00:00')
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS "session" (
