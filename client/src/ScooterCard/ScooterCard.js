@@ -9,11 +9,13 @@ function ScooterCard({ scooter }) {
 
     return (
         <div className="scooter-card">
-            <img src={scooter.preview} alt={scooter.name} />
-            <div className="scooter-details">
-                <div><h2>{scooter.name}</h2></div>
-                <div><p>€{scooter.price}</p></div>
-            </div>
+            <a href={`/scooter/${scooter.id}`} className="scooter-link">
+                <img src={scooter.preview} alt={scooter.name} />
+                <div className="scooter-details">
+                    <div><h2>{scooter.name}</h2></div>
+                    <div><p>€{scooter.price}</p></div>
+                </div>
+            </a>
             <div className="scooter-secondary">
                 <div className="scooter-owner">
                     <img src={scooter.profilePic} alt={scooter.owner_name} className='profile-pic' />

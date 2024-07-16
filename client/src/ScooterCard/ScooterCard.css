@@ -15,6 +15,9 @@
 
 .scooter-details {
   align-items: baseline;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .scooter-secondary {

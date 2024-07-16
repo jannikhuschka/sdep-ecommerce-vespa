@@ -1,14 +1,31 @@
-.scooter {
+.messages {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.scooter {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: flex-start;
+    margin: 1rem;
+    padding: 1rem;
+    border: #bbb solid 0.15rem;
+    border-radius: 1.5rem;
 }
 
 .scooter-messages {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: center;
-    width: 100%;
+    align-items: flex-start;
+    align-self: flex-end;
+    flex-wrap: wrap;
+}
+
+.scooter-preview {
+    /* width: 30%; */
+    margin-bottom: 2rem;
+    align-self: center;
 }

@@ -29,7 +29,7 @@ function WishlistPage() {
     }, []);
 
     return (
-        <div>
+        <div id="wishlist">
             <h1>Wishlist</h1>
             <div id="scooters" className="scooters">
                 {scooters.map(scooter => (

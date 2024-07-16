@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
 import './HomePage.css';
@@ -6,7 +6,13 @@ import { existsCookie } from '../Navbar/Navbar';
 import { getIsLoggedIn } from '../Navbar/Navbar';
 
 function HomePage() {
-    const isLoggedIn = getIsLoggedIn();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    
+    const updateLoggedIn = async() => {
+        const loggedIn = await getIsLoggedIn();
+        setIsLoggedIn(loggedIn);
+    }
+    updateLoggedIn();
 
     return (
         <div className="container">

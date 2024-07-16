@@ -1,0 +1,13 @@
+.scooter-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-around;
+    margin-top: 2rem;
+    margin: 3rem;
+}
+
+.carousel img {
+    /* max-height: 30rem; */
+    max-width: 60rem;
+}

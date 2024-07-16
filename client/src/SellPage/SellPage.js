@@ -32,8 +32,8 @@ function SellPage() {
                         key={index}
                         src={image.preview}
                         alt="dummy"
-                        width="300"
-                        height="300"
+                        width={100/images.length + "%"}
+                        height="auto"
                         className="my-10 mx-5"
                         />
                     ))

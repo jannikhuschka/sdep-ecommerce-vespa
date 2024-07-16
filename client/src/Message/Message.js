@@ -6,30 +6,30 @@ function Message({ message, isOwnScooter }) {
             case 'offer':
                 if (!isOwnScooter) return;
                 return (
-                    <div>
-                        <button onClick={handleAccept}>Accept</button>
-                        <button onClick={handleDecline}>Decline</button>
+                    <div className='message-button'>
+                        <button className='button' onClick={handleAccept}>Accept</button>
+                        <button className='button decline-button' onClick={handleDecline}>Decline</button>
                     </div>
                 );
             case 'accept-owner':
                 if (isOwnScooter) return;
                 return (
-                    <div>
-                        <button onClick={handleComplete}>Complete</button>
+                    <div className='message-button'>
+                        <button className='button' onClick={handleComplete}>Complete</button>
                     </div>
                 );
             case 'accept-both':
                 if (!isOwnScooter) return;
                 return (
-                    <div>
-                        <button onClick={handleDelete}>Delete</button>
+                    <div className='message-button'>
+                        <button className='button' onClick={handleDelete}>Delete</button>
                     </div>
                 );
             case 'rejected':
                 if (isOwnScooter) return;
                 return (
-                    <div>
-                        <button onClick={handleDelete}>Delete</button>
+                    <div className='message-button'>
+                        <button className='button' onClick={handleDelete}>Delete</button>
                     </div>
                 );
             default:
@@ -40,8 +40,8 @@ function Message({ message, isOwnScooter }) {
     return (
         <div className="message">
             {/* <div className="message-title">{message.kind}</div> */}
-            <div className="message-text">{isOwnScooter ? message.message_seller : message.message_buyer}</div>
             <div className="message-date">{getTimeFromNow(message.timestamp)}</div>
+            <div className="message-text">{isOwnScooter ? message.message_seller : message.message_buyer}</div>
             {switchButton(message.state, isOwnScooter)}
         </div>
     );
@@ -77,6 +77,7 @@ function Message({ message, isOwnScooter }) {
             // .then(response => response.json())
             .then(data => {
                 console.log('Success:', data);
+                window.location.reload();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -103,6 +104,7 @@ function Message({ message, isOwnScooter }) {
             // .then(response => response.json())
             .then(response => {
                 console.log('Success:', response.text());
+                window.location.reload();
             })
             .catch(error => {
                 console.error('Error:', error);

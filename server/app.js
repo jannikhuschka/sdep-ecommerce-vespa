@@ -175,6 +175,21 @@ app.get('/api/products/filtered', async (req, res) => {
     }
 });
 
+app.get('/api/scooter/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        var result = await pool.query(`
+            SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name
+            FROM (scooters JOIN users ON scooters.owner = users.id)
+            WHERE scooters.id = $1
+            `, [id]);
+        res.json(getImagesForScooters(result.rows)[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 app.get('/api/products/extremeValues', async (req, res) => {
     try {
         const attribute = req.query.attribute;
@@ -337,7 +352,14 @@ app.delete('/api/messages/:id', async (req, res) => {
     try {
         const messageId = req.params.id;
         console.log("message ID: " + messageId);
-        await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
+        const message = (await pool.query('SELECT * FROM messages WHERE id = $1', [messageId])).rows[0];
+        if (message.state === 'accept-both') {
+            await pool.query('DELETE FROM messages WHERE scooter_id = $1', [message.scooter_id]);
+            await pool.query('DELETE FROM wishlist WHERE scooter_id = $1', [message.scooter_id]);
+            await pool.query('DELETE FROM scooters WHERE id = $1', [message.scooter_id]);
+        } else {
+            await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
+        }
         res.status(200).send('Message deleted');
     } catch (err) {
         console.error(err.message);

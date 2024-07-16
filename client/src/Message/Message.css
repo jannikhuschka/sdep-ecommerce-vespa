@@ -1,7 +1,29 @@
 .message {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: baseline;
-    width: 100%;
+    align-items: flex-start;
+    border: #ccc solid 0.15rem;
+    border-radius: 0.5rem;
+    background-color: #eee;
+    padding: 0.5rem 1rem;
+}
+
+.message-date {
+    color: gray;
+    font-size: small;
+}
+
+.message-button {
+    align-self: flex-end;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.message-button > .button {
+    background-color: #6a6;
+    margin-left: 1rem;
+}
+
+.message-button > .decline-button {
+    background-color: #f66;
 }
