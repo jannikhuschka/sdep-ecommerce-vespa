@@ -137,14 +137,19 @@ function getImagesForScooters(rows) {
     return rows;
 }
 
-app.post('/api/profile-picture', imageUpload.single('profile-pic'), manipulateProfilePic, function async (req, res, next) {
-  console.log(req.session);
-  res.status(201).send('Profile picture uploaded');
+app.post('/api/profile-picture', imageUpload.single('profile-pic'), manipulateProfilePic, async (req, res) => {
+    // console.log(req.session);
+    // console.log(req.body);
+    await pool.query('UPDATE users SET name = $1, email = $2 WHERE id = $3', [req.body.name, req.body.email, req.session.userID]);
+    res.status(201).send('Profile picture uploaded');
 })
 
 app.get('/api/products', async (req, res) => {
     try {
-        var result = await pool.query('SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name FROM (scooters JOIN users ON scooters.owner = users.id)');
+        var result = await pool.query(`
+            SELECT scooters.id AS id, scooters.name as name, description, year, model, power, price, owner, users.name AS owner_name
+            FROM (scooters JOIN users ON scooters.owner = users.id)
+        `);
         res.json(getImagesForScooters(result.rows));
     } catch (err) {
         console.error(err.message);
@@ -327,8 +332,8 @@ app.put('/api/messages/:id', async (req, res) => {
                 message_seller = "You accepted " + buyer.name + "'s buying request.";
                 break;
             case 'accept-both':
-                message_buyer = "You and " + owner.name + " accepted the buying request.";
-                message_seller = "You and " + buyer.name + " accepted the buying request.";
+                message_buyer = "You and " + owner.name + " accepted the buying request. Contact them at " + owner.email;
+                message_seller = "You and " + buyer.name + " accepted the buying request. Contact them at " + buyer.email;
                 break;
             case 'rejected':
                 message_buyer = "Your buying request to " + owner.name + " has been rejected.";
@@ -400,7 +405,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.get('/api/user', async (req, res) => {
-    console.log(req.session);
+    // console.log(req.session);
     try {
         const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userID]);
         if (result.rows.length === 0) {

@@ -16,6 +16,7 @@ function SearchPage() {
     var [yearRange, setYearRange] = useState([1900, 2024]);
     var [globalPowerRange, setGlobalPowerRange] = useState([0, 1000]);
     var [powerRange, setPowerRange] = useState([0, 1000]);
+    const axiosInstance = axios.create({ baseURL: 'http://localhost:5001', withCredentials: true });
 
     function updatePriceRange(range) {
         console.log('Range:', range);
@@ -25,10 +26,6 @@ function SearchPage() {
     useEffect(() => {
         const fetchScooters = async () => {
             try {
-                const axiosInstance = axios.create({
-                    baseURL: 'http://localhost:5001',
-                    withCredentials: true,
-                });
                 const scooters = (await axiosInstance.get('/api/products')).data;
                 const user = (await axiosInstance.get('/api/user')).data;
                 if (user.id) {
@@ -45,9 +42,6 @@ function SearchPage() {
 
         const fetchExtremeValues = async ({attribute}) => {
             try {
-                const axiosInstance = axios.create({
-                    baseURL: 'http://localhost:5001',
-                });
                 const response = await axiosInstance.get('/api/products/extremeValues', {
                     params: { attribute: attribute },
                 });
@@ -64,23 +58,28 @@ function SearchPage() {
         fetchExtremeValues({attribute: 'power'}).then(value => {setGlobalPowerRange(value); return value}).then(value => {setPowerRange(value)});
     }, []);
 
-    function search() {
-        const axiosInstance = axios.create({
-            baseURL: 'http://localhost:5001',
-        });
-        const search = document.getElementById('search').value;
-        axiosInstance.get('/api/products/filtered', {
-            params: {
-                search: search,
-                priceRange: priceRange,
-                yearRange: yearRange,
-                powerRange: powerRange,
-            },
-        }).then(response => {
+    async function search() {
+        try {
+            const search = document.getElementById('search').value;
+            const response = await axiosInstance.get('/api/products/filtered', {
+                params: {
+                    search: search,
+                    priceRange: priceRange,
+                    yearRange: yearRange,
+                    powerRange: powerRange,
+                },
+            });
+            const user = (await axiosInstance.get('/api/user')).data;
+            if (user.id) {
+                for (var i = 0; i < response.data.length; i++) {
+                    if (response.data[i].owner === user.id) continue;
+                    response.data[i].wishlisted = user.wishlist.includes(response.data[i].id);
+                }
+            }
             setScooters(response.data);
-        }).catch(error => {
+        } catch (error) {
             console.error('Error searching scooters:', error);
-        });
+        }
     }
 
     return (

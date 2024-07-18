@@ -39,19 +39,21 @@ function ScooterCard({ scooter }) {
                         }})
                     }
 
-                    <BuyButton clickFunction={async () => {
-                        await fetch("http://localhost:5001/api/messages", {
-                            method: 'POST',
-                            credentials: 'include',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ scooter: scooter }),
-                        })
-                        .then((data) => {
-                            console.log(data);
-                        });
-                    }} />
+                    { wishlisted !== undefined && 
+                        <BuyButton clickFunction={async () => {
+                            await fetch("http://localhost:5001/api/messages", {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ scooter: scooter }),
+                            })
+                            .then((data) => {
+                                console.log(data);
+                            });
+                        }} />
+                    }
                 </div>
             </div>
         </div>

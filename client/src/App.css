@@ -68,3 +68,7 @@ a {
   text-decoration: none;
   color: black;
 }
+
+#root {
+    padding-bottom: 5rem;
+}

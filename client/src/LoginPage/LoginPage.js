@@ -34,18 +34,18 @@ function login() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     console.log("Logging in user ", email, " with password (SECRET) ", password);
+
     // DB Access to check user and login if correct
     axiosInstance.post('/api/login', {
         email: email,
         password: password
     }, {
-        withCredentials: true,
+        withCredentials: true
     }).then(response => {
         console.log(response.data);
-        // document.cookie += 'authToken=' + response.data.id;
         window.location.href = '/';
     }).catch(error => {
-        console.log(error.response.data);
+        window.alert(error.response.data);
     });
 }
 
@@ -66,6 +66,6 @@ function signup() {
         // document.cookie = 'authToken=' + response.data.id;
         window.location.href = '/';
     }).catch(error => {
-        console.log(error.response.data);
+        window.alert(error.response.data);
     });
 }
