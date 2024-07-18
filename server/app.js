@@ -96,9 +96,10 @@ const manipulateScooterPics = async (req, res, next) => {
 
         // create folder for scooter images with respective id
         const dir = `./images/scooters/${id}`;
-        if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
+        if (fs.existsSync(dir)){
+            fs.rmdirSync(dir, { recursive: true });
         }
+        fs.mkdirSync(dir);
 
         // resize to contain in 1920x1080, then save as png with index as file name
         for (let i = 0; i < req.files.length; i++) {
@@ -362,6 +363,7 @@ app.delete('/api/messages/:id', async (req, res) => {
             await pool.query('DELETE FROM messages WHERE scooter_id = $1', [message.scooter_id]);
             await pool.query('DELETE FROM wishlist WHERE scooter_id = $1', [message.scooter_id]);
             await pool.query('DELETE FROM scooters WHERE id = $1', [message.scooter_id]);
+            fs.rmdirSync(`./images/scooters/${message.scooter_id}`, { recursive: true });
         } else {
             await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
         }
