@@ -26,6 +26,7 @@ function ProfilePage() {
         console.log(userData);
         document.getElementById('name').value = userData.name;
         document.getElementById('email').value = userData.email;
+        setImage({preview: `http://localhost:5001/images/profile/${userData.id}.png`, raw: ''});
     }
 
     const submit = async () => {
